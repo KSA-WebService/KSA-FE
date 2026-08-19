@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeTone = "neutral" | "brand" | "success" | "warning" | "destructive" | "info";
+export type BadgeTone = "neutral" | "brand" | "success" | "warning" | "destructive" | "info";
 
 // Compact pill badges per docs/admin/product.md §16 -- status meaning must
 // never rely on color alone, so callers should always pair this with text.

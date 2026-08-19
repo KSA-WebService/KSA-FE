@@ -19,15 +19,15 @@ export interface AdminNavItem {
 
 // Icons per docs/admin/product.md §7. `enabled: false` items render in the
 // sidebar but are not links -- their routes don't exist until a later
-// phase, and Phase 1 must never send anyone to a 404 (see also
+// phase, and this app must never send anyone to a 404 (see also
 // dashboard-summary-card.tsx and the Dashboard quick actions, which follow
 // the same rule).
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: Home, enabled: true },
   { label: "Users", href: "/admin/users", icon: Users, enabled: true },
-  { label: "Posts", href: "/admin/posts", icon: FileText, enabled: false },
+  { label: "Posts", href: "/admin/posts", icon: FileText, enabled: true },
   { label: "Token", href: "/admin/token", icon: Coins, enabled: false },
-  { label: "Whitelist", href: "/admin/whitelist", icon: UserCheck, enabled: false },
+  { label: "Whitelist", href: "/admin/whitelist", icon: UserCheck, enabled: true },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag, enabled: false },
   { label: "Products", href: "/admin/products", icon: Package, enabled: false },
   { label: "Logs", href: "/admin/logs", icon: History, enabled: false },
