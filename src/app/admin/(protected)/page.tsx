@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useNewOrdersCount, useTotalPostsCount, useTotalUsersCount } from "@/hooks/use-dashboard-counts";
 import { PageHeader } from "@/components/admin/page-header";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { SummaryCard } from "./dashboard-summary-card";
 
-// docs/admin/admin-ui.md §2. New Orders (/admin/orders) still shows its
-// live count but isn't clickable, and New Product stays disabled --
-// because those routes don't exist yet (see nav-items.ts for the same rule
-// in the sidebar). Total Posts and New Post are enabled now that
-// /admin/posts and /admin/posts/new exist.
+// docs/admin/admin-ui.md §2. All summary cards and quick actions are now
+// enabled: /admin/orders, /admin/posts, /admin/products, and /admin/users
+// all exist as of Phase 4.
 export default function AdminDashboardPage() {
   const newOrders = useNewOrdersCount();
   const totalPosts = useTotalPostsCount();
@@ -26,6 +24,14 @@ export default function AdminDashboardPage() {
             value={newOrders.data}
             isLoading={newOrders.isLoading}
             isError={newOrders.isError}
+            // admin-ui.md's Dashboard section literally says
+            // "?status=ordered", but the confirmed Orders query param
+            // (both api-contract.md and the Orders page itself) is
+            // `orderStatus`, not `status` -- using the doc's literal
+            // string would silently fail to select the Ordered tab. Using
+            // the confirmed param name here instead; see the Phase 4
+            // summary's "ambiguities" section.
+            href="/admin/orders?orderStatus=ordered"
           />
           <SummaryCard
             label="Total Posts"
@@ -49,9 +55,9 @@ export default function AdminDashboardPage() {
             <Link href="/admin/posts/new" className={buttonVariants("primary")}>
               New Post
             </Link>
-            <Button disabled title="Products are implemented in a later phase">
+            <Link href="/admin/products/new" className={buttonVariants("primary")}>
               New Product
-            </Button>
+            </Link>
           </div>
         </div>
       </div>

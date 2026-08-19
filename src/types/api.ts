@@ -329,14 +329,15 @@ export interface PostCreateResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Files -- docs/admin/api-contract.md "Post Image Upload" (3-stage flow)
+// Files -- docs/admin/api-contract.md "Post Image Upload" (3-stage flow),
+// reused by Products with purpose: "product_image".
 // ---------------------------------------------------------------------------
 
 export interface PresignedFileRequest {
   originalName: string;
   contentType: string;
   fileSize: number;
-  purpose: "post_image";
+  purpose: "post_image" | "product_image";
 }
 
 export interface PresignedFileResponse {
@@ -517,4 +518,174 @@ export interface TokenResetResponse {
   reason: string;
   performedBy: TokenEventCreator;
   performedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Products -- docs/admin/api-contract.md "Admin Products List" through
+// "Admin Product Create"
+// ---------------------------------------------------------------------------
+
+export type ProductType = "ticket" | "merchandise";
+export type PublicationStatus = "draft" | "published" | "hidden";
+export type AvailabilityStatus = "available" | "unavailable";
+
+export interface ProductImage {
+  fileId: string;
+  fileUrl: string;
+}
+
+// GET /admin/products -- list item
+export interface ProductListItem {
+  productId: string;
+  productName: string;
+  productType: ProductType;
+  tokenPrice: number;
+  stockQuantity: number;
+  isOrderable: boolean;
+  availabilityStatus: AvailabilityStatus;
+  publicationStatus: PublicationStatus;
+  image: ProductImage | null;
+  updatedAt: string;
+}
+
+// The current admin list UI intentionally does not expose productType as a
+// filter (docs/admin/admin-ui.md §13), so it's not part of this params type.
+export interface ProductsListParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  publicationStatus?: PublicationStatus;
+  availabilityStatus?: AvailabilityStatus;
+}
+
+// GET /admin/products/{id} -- also the shape PATCH returns directly
+// (confirmed: full detail, not a summary).
+export interface ProductDetail {
+  productId: string;
+  productName: string;
+  productType: ProductType;
+  tokenPrice: number;
+  stockQuantity: number;
+  isOrderable: boolean;
+  availabilityStatus: AvailabilityStatus;
+  publicationStatus: PublicationStatus;
+  description: string | null;
+  image: ProductImage | null;
+  coreFieldsLocked: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// PATCH /admin/products/{id}. imageFileId: a real fileId to attach/replace
+// an image. Manual QA confirmed the backend rejects `null` here once a
+// product already has an image, so the frontend never sends null solely to
+// remove one -- an existing image can only be replaced, never removed
+// (still typed as nullable since a product created without an image can
+// receive its first one via a non-null fileId; null itself is not sent by
+// this frontend).
+export interface ProductUpdatePayload {
+  productName?: string;
+  tokenPrice?: number;
+  stockQuantity?: number;
+  isOrderable?: boolean;
+  description?: string | null;
+  imageFileId?: string | null;
+  publicationStatus?: PublicationStatus;
+}
+
+// POST /admin/products. Frontend only ever creates as draft or published.
+export interface ProductCreatePayload {
+  productName: string;
+  productType: ProductType;
+  tokenPrice: number;
+  stockQuantity: number;
+  isOrderable: boolean;
+  publicationStatus: "draft" | "published";
+  description?: string;
+  imageFileId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Orders -- docs/admin/api-contract.md "Admin Orders List" / "Admin Order
+// Status Update". No Order Detail endpoint/route exists.
+// ---------------------------------------------------------------------------
+
+export type OrderStatus = "ordered" | "accepted" | "delivered" | "canceled";
+
+export interface OrderProductSummary {
+  productId: string;
+  productName: string;
+}
+
+export interface OrderCustomerSummary {
+  userId: string;
+  customerName: string;
+  studentNumber: string;
+  email: string;
+}
+
+export interface OrderListItem {
+  orderId: string;
+  product: OrderProductSummary;
+  customer: OrderCustomerSummary;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  orderStatus: OrderStatus;
+  orderedAt: string;
+  acceptedAt: string | null;
+  deliveredAt: string | null;
+  canceledAt: string | null;
+  cancellationReason: string | null;
+}
+
+// `sort` only has a confirmed value for "oldest"; the UI's "Newest" option
+// omits the param entirely (confirmed default) rather than guessing an
+// unconfirmed "newest" string -- see the Orders implementation summary.
+export interface OrdersListParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  orderStatus?: OrderStatus;
+  sort?: "oldest";
+}
+
+// PATCH /admin/orders/{id}/status
+export interface UpdateOrderStatusPayload {
+  orderStatus: "accepted" | "delivered" | "canceled";
+  cancellationReason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Action Logs -- docs/admin/api-contract.md "Admin Action Logs List" /
+// "Admin Action Log Detail". Read-only.
+// ---------------------------------------------------------------------------
+
+export interface ActionLogAdmin {
+  userId: string;
+  name: string;
+  email: string;
+}
+
+// actionType/action are open-ended ("other action types may appear as the
+// application grows") so they're typed as string, not a closed union.
+export interface ActionLogListItem {
+  logId: number;
+  admin: ActionLogAdmin;
+  actionType: string;
+  action: string;
+  targetId: string | null;
+  createdAt: string;
+}
+
+export interface ActionLogsListParams {
+  page?: number;
+  limit?: number;
+  actionType?: string;
+}
+
+// GET /admin/action-logs/{id} -- list fields plus action-specific details.
+export interface ActionLogDetail extends ActionLogListItem {
+  details: Record<string, unknown> | null;
 }

@@ -15,3 +15,13 @@ export function toTitleCase(value: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+// For camelCase object keys (e.g. Action Log `details` metadata:
+// "beforeStatus" -> "Before Status"). Distinct from toTitleCase, which
+// splits on underscores/spaces, not capitalization.
+export function humanizeCamelCase(key: string): string {
+  const withSpaces = key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
+  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+}
