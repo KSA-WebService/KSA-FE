@@ -365,3 +365,156 @@ export interface CompletedFileResponse {
   createdAt: string;
   completedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Token Events / Grants / Reset -- docs/admin/api-contract.md "Admin Token
+// Events List" through "Admin Token Balance Reset"
+// ---------------------------------------------------------------------------
+
+export interface TokenEventCreator {
+  userId: string;
+  name: string;
+}
+
+// GET /admin/token-events -- list item
+export interface TokenEventSummary {
+  tokenEventId: string;
+  eventName: string;
+  createdBy: TokenEventCreator;
+  createdAt: string;
+  lastGrantUpdatedAt: string | null;
+  grantedMemberCount: number;
+}
+
+export interface TokenEventsListParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+}
+
+export interface CreateTokenEventPayload {
+  eventName: string;
+}
+
+// POST /admin/token-events response
+export interface CreateTokenEventResponse {
+  tokenEventId: string;
+  eventName: string;
+  createdBy: TokenEventCreator;
+  createdAt: string;
+}
+
+export type GrantEligibility = "eligible" | "adjustment_only";
+export type GrantStatus = "granted" | "not_granted";
+
+// One row of GET /admin/token-events/{id}'s student list.
+// tokenGrantId: null means no grant exists yet for this user in this event
+// -- grantedAmount/reason/grantedBy/grantedAt/grantUpdatedAt are then null too.
+export interface TokenGrantStudentRow {
+  userId: string;
+  name: string;
+  studentNumber: string;
+  email: string;
+  grantEligibility: GrantEligibility;
+  currentTokenBalance: number;
+  tokenGrantId: string | null;
+  grantedAmount: number | null;
+  reason: string | null;
+  grantedBy: TokenEventCreator | null;
+  grantedAt: string | null;
+  grantUpdatedAt: string | null;
+}
+
+export interface TokenEventDetailParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  grantStatus?: GrantStatus;
+}
+
+// GET /admin/token-events/{id} -- event metadata + paginated student rows.
+// The array field name isn't shown in a confirmed example for this specific
+// endpoint; every other paginated admin endpoint uses `items`, so the same
+// convention is applied here rather than inventing a new field name.
+export interface TokenEventDetail {
+  tokenEventId: string;
+  eventName: string;
+  createdBy: TokenEventCreator;
+  createdAt: string;
+  lastGrantUpdatedAt: string | null;
+  grantedMemberCount: number;
+  items: TokenGrantStudentRow[];
+  pagination: PaginationMeta;
+}
+
+export interface GrantEntryPayload {
+  userId: string;
+  grantedAmount: number;
+  reason: string;
+}
+
+// PATCH /admin/token-events/{id}/grants request
+export interface SaveGrantsPayload {
+  grants: GrantEntryPayload[];
+}
+
+export interface GrantSaveResultItem {
+  status: string;
+  tokenGrantId: string;
+  tokenLogId: string;
+  userId: string;
+  name: string;
+  studentNumber: string;
+  previousGrantedAmount: number;
+  grantedAmount: number;
+  deltaAmount: number;
+  reason: string;
+  balanceBefore: number;
+  balanceAfter: number;
+}
+
+export interface SaveGrantsResponse {
+  tokenEventId: string;
+  processedCount: number;
+  savedCount: number;
+  unchangedCount: number;
+  items: GrantSaveResultItem[];
+}
+
+export interface RenameTokenEventPayload {
+  eventName: string;
+}
+
+export interface RenameTokenEventResponse {
+  tokenEventId: string;
+  eventName: string;
+  updatedAt: string;
+}
+
+export interface DeleteTokenEventResponse {
+  deletedTokenEventId: string;
+  deletedAt: string;
+}
+
+// GET /admin/token-balances/reset-preview
+export interface TokenResetPreview {
+  affectedMemberCount: number;
+  totalResetAmount: number;
+  previewedAt: string;
+}
+
+export const TOKEN_RESET_CONFIRMATION_PHRASE = "RESET_ALL_STUDENT_TOKEN_BALANCES" as const;
+
+export interface TokenResetPayload {
+  confirmation: typeof TOKEN_RESET_CONFIRMATION_PHRASE;
+  reason: string;
+}
+
+// POST /admin/token-balances/reset response
+export interface TokenResetResponse {
+  affectedMemberCount: number;
+  totalResetAmount: number;
+  reason: string;
+  performedBy: TokenEventCreator;
+  performedAt: string;
+}

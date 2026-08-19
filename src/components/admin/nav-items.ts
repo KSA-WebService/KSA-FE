@@ -26,7 +26,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: Home, enabled: true },
   { label: "Users", href: "/admin/users", icon: Users, enabled: true },
   { label: "Posts", href: "/admin/posts", icon: FileText, enabled: true },
-  { label: "Token", href: "/admin/token", icon: Coins, enabled: false },
+  { label: "Token", href: "/admin/token", icon: Coins, enabled: true },
   { label: "Whitelist", href: "/admin/whitelist", icon: UserCheck, enabled: true },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag, enabled: false },
   { label: "Products", href: "/admin/products", icon: Package, enabled: false },
