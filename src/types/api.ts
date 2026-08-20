@@ -689,3 +689,76 @@ export interface ActionLogsListParams {
 export interface ActionLogDetail extends ActionLogListItem {
   details: Record<string, unknown> | null;
 }
+
+// ---------------------------------------------------------------------------
+// Public Posts -- docs/user/api-contract.md "Page 1 — Home" / "Page 5 — News
+// List" / "Page 6 — News Detail". Unauthenticated, public-facing shapes --
+// distinct from the admin Post types above (no `status`/`author`/etc).
+// ---------------------------------------------------------------------------
+
+export interface PublicImageRef {
+  fileId: string;
+  fileUrl: string;
+}
+
+// GET /posts -- "Home News Preview" / "News List"
+export interface PublicPostListItem {
+  postId: string;
+  title: string;
+  categories: PostCategory[];
+  membersOnly: boolean;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  representativeImage: PublicImageRef | null;
+  publishedAt: string;
+}
+
+export interface PublicPostsListParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  category?: PostCategory;
+}
+
+// ---------------------------------------------------------------------------
+// Public Products -- docs/user/api-contract.md "Page 1 — Home" / "Page 7 —
+// Store List". The public Products API does not support `keyword` (confirmed
+// HTTP 400 if sent) -- see PublicProductsListParams.
+// ---------------------------------------------------------------------------
+
+// GET /products -- "Home Store Preview" / "Store List"
+export interface PublicProductListItem {
+  productId: string;
+  productName: string;
+  productType: ProductType;
+  description: string | null;
+  tokenPrice: number;
+  image: PublicImageRef | null;
+  availabilityStatus: AvailabilityStatus;
+  publishedAt: string;
+}
+
+export interface PublicProductsListParams {
+  page?: number;
+  limit?: number;
+  productType?: ProductType;
+}
+
+// ---------------------------------------------------------------------------
+// Current User ("me") -- docs/user/api-contract.md "Page 4 — My Page". Also
+// used by the shared Header to resolve the authenticated display name, since
+// the Supabase session itself never carries the KSA member's `name`.
+// ---------------------------------------------------------------------------
+
+// GET /users/me
+export interface CurrentUser {
+  userId: string;
+  name: string;
+  studentNumber: string;
+  email: string;
+  role: UserRole;
+  tokenBalance: number;
+  status: UserAccountStatus;
+  agreedPrivacy: boolean;
+  agreedAt: string | null;
+}

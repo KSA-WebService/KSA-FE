@@ -27,6 +27,21 @@ export function DropdownMenuContent({
   );
 }
 
+export function DropdownMenuItem({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.Item>) {
+  return (
+    <DropdownMenuPrimitive.Item
+      className={cn(
+        "flex cursor-pointer items-center rounded-control px-2 py-1.5 text-body text-text-primary outline-none select-none data-[highlighted]:bg-surface-muted",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export function DropdownMenuCheckboxItem({
   className,
   children,
