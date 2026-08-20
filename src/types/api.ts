@@ -713,11 +713,40 @@ export interface PublicPostListItem {
   publishedAt: string;
 }
 
+// Confirmed backend values for the public `period` filter. There is no
+// "all" value on the wire -- "전체" is represented by omitting the param
+// entirely (see PublicPostsListParams.period below).
+export type PostPeriod = "upcoming" | "past" | "undated";
+
 export interface PublicPostsListParams {
   page?: number;
   limit?: number;
   keyword?: string;
   category?: PostCategory;
+  period?: PostPeriod;
+  // Confirmed values are "latest" | "oldest"; the product decision is
+  // News always displays newest-published-first with no user-facing sort
+  // control, so only "latest" is ever actually sent by this frontend.
+  sort?: "latest" | "oldest";
+}
+
+export interface PublicPostImage extends PublicImageRef {
+  sortOrder: number;
+}
+
+// GET /posts/{postId} -- "News Detail". `content` is confirmed nullable in
+// practice -- a published post can legitimately have no body content.
+export interface PublicPostDetail {
+  postId: string;
+  title: string;
+  content: string | null;
+  categories: PostCategory[];
+  membersOnly: boolean;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  images: PublicPostImage[];
+  publishedAt: string;
+  updatedAt: string;
 }
 
 // ---------------------------------------------------------------------------

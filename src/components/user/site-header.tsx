@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserSession } from "@/providers/user-session-provider";
@@ -41,6 +41,13 @@ export function SiteHeader({ overHero = false }: SiteHeaderProps) {
   const { session, isLoading, signOut } = useUserSession();
   const { data: currentUser } = useCurrentUserQuery();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // "Indicate News/Store as the active navigation item" (docs/user/user-ui.md
+  // "Shared Header"). Neither ever matches on Home ("/"), so this doesn't
+  // change Home's rendered nav at all.
+  const isNewsActive = pathname === "/news" || pathname.startsWith("/news/");
+  const isStoreActive = pathname === "/store" || pathname.startsWith("/store/");
 
   useEffect(() => {
     if (!overHero) return;
@@ -96,7 +103,11 @@ export function SiteHeader({ overHero = false }: SiteHeaderProps) {
             href="/news"
             className={cn(
               "text-body font-medium transition-colors",
-              transparent ? "text-white hover:text-white/80" : "text-text-primary hover:text-brand-800",
+              transparent
+                ? "text-white hover:text-white/80"
+                : isNewsActive
+                  ? "text-brand-800 font-semibold"
+                  : "text-text-primary hover:text-brand-800",
             )}
           >
             News
@@ -105,7 +116,11 @@ export function SiteHeader({ overHero = false }: SiteHeaderProps) {
             href="/store"
             className={cn(
               "text-body font-medium transition-colors",
-              transparent ? "text-white hover:text-white/80" : "text-text-primary hover:text-brand-800",
+              transparent
+                ? "text-white hover:text-white/80"
+                : isStoreActive
+                  ? "text-brand-800 font-semibold"
+                  : "text-text-primary hover:text-brand-800",
             )}
           >
             Store

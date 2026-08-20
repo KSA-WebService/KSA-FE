@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
-import type { ListResponse, PublicPostListItem, PublicPostsListParams } from "@/types/api";
+import type { ListResponse, PublicPostDetail, PublicPostListItem, PublicPostsListParams } from "@/types/api";
 
 function buildQueryString(params: PublicPostsListParams): string {
   const search = new URLSearchParams();
@@ -12,7 +12,15 @@ function buildQueryString(params: PublicPostsListParams): string {
 }
 
 // GET /posts -- public "News List" / "Home News Preview" (docs/user/api-contract.md).
-// No Authorization header -- this is a public endpoint.
+// No Authorization header -- this is a public endpoint. `params` also
+// supports `keyword`/`category` for the News List page; Home's preview
+// usage (`{ page: 1, limit: 3 }`) is unaffected since those fields stay
+// optional.
 export function getPublicPosts(params: PublicPostsListParams) {
   return apiFetch<ListResponse<PublicPostListItem>>(`/posts${buildQueryString(params)}`);
+}
+
+// GET /posts/{postId} -- public "News Detail". No Authorization header.
+export function getPublicPost(postId: string) {
+  return apiFetch<PublicPostDetail>(`/posts/${postId}`);
 }
