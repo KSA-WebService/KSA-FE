@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { usePublicProductsQuery } from "@/hooks/use-public-products-query";
-import { ImagePlaceholder } from "@/components/user/image-placeholder";
+import { ProductImage } from "@/components/user/product-image";
 import { SectionHeading } from "@/components/user/section-heading";
 import { SectionEmptyState, SectionErrorState } from "@/components/user/section-states";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,26 +53,7 @@ function ProductCard({ product }: { product: PublicProductListItem }) {
 
   return (
     <div className={cn(isUnavailable && "opacity-70")}>
-      {/* Store images may contain coupons/QR codes/text, so unlike News
-          thumbnails they must never be cropped: object-contain on a 4:5
-          area (same proportion as News, appropriate for portrait/poster
-          product assets) preserves the full image and its aspect ratio,
-          with a quiet neutral backdrop filling any resulting empty space.
-          This is the intended Store image policy for the future /store
-          page too, not just this Home preview. */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-surface bg-surface-muted">
-        {product.image ? (
-          <Image
-            src={product.image.fileUrl}
-            alt={product.productName}
-            fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-contain"
-          />
-        ) : (
-          <ImagePlaceholder className="h-full w-full" />
-        )}
-      </div>
+      <ProductImage image={product.image} alt={product.productName} />
 
       <h3 className="mt-4 text-body font-semibold text-text-primary">{product.productName}</h3>
       <p className="mt-1 text-body text-brand-800">🪙 {product.tokenPrice} Tokens</p>

@@ -793,6 +793,34 @@ export interface CurrentUser {
 }
 
 // ---------------------------------------------------------------------------
+// Create Order -- docs/user/api-contract.md "Page 8 — Order Confirmation".
+// Authenticated (the ordering member's own action) -- distinct from the
+// admin Orders List above (no `customer` field), but reuses OrderStatus
+// and OrderProductSummary since both shapes are identical here.
+// ---------------------------------------------------------------------------
+
+// POST /orders request body. Only the fields the backend actually needs --
+// never a frontend-calculated price/total.
+export interface CreateOrderPayload {
+  productId: string;
+  quantity: number;
+}
+
+// POST /orders response. Authoritative for unitPrice/totalAmount/
+// remainingTokenBalance -- the frontend's pre-submit cost preview is
+// presentation only.
+export interface CreateOrderResult {
+  orderId: string;
+  product: OrderProductSummary;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  orderStatus: OrderStatus;
+  remainingTokenBalance: number;
+  orderedAt: string;
+}
+
+// ---------------------------------------------------------------------------
 // Public Auth -- docs/user/api-contract.md "Page 3 — Account Activation".
 // Both endpoints are public (no Authorization header); Login itself has no
 // KSA backend endpoint at all -- it's Supabase `signInWithPassword` only.
