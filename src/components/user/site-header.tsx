@@ -88,7 +88,7 @@ export function SiteHeader({ overHero = false }: SiteHeaderProps) {
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center" aria-label="KSA Home">
-          <Image src="/user/ksa-logo.png" alt="KSA" width={993} height={943} className="h-9 w-auto" priority />
+          <Image src="/user/ksa-logo.png" alt="KSA" width={993} height={943} className="h-10 w-auto" priority />
         </Link>
 
         <nav className="flex items-center gap-8">

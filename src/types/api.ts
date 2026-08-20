@@ -762,3 +762,40 @@ export interface CurrentUser {
   agreedPrivacy: boolean;
   agreedAt: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Public Auth -- docs/user/api-contract.md "Page 3 — Account Activation".
+// Both endpoints are public (no Authorization header); Login itself has no
+// KSA backend endpoint at all -- it's Supabase `signInWithPassword` only.
+// ---------------------------------------------------------------------------
+
+export interface VerifyInvitationPayload {
+  token: string;
+}
+
+// POST /auth/invitations/verify
+export interface VerifiedInvitation {
+  name: string;
+  email: string;
+  studentNumber: string;
+  expiresAt: string;
+}
+
+// POST /auth/onboarding/complete. `agreedPrivacy` is typed as the literal
+// `true` -- the contract explicitly forbids ever sending `false`.
+export interface CompleteOnboardingPayload {
+  token: string;
+  password: string;
+  agreedPrivacy: true;
+}
+
+export interface OnboardingCompleteResult {
+  userId: string;
+  name: string;
+  email: string;
+  studentNumber: string;
+  role: UserRole;
+  status: UserAccountStatus;
+  tokenBalance: number;
+  createdAt: string;
+}
