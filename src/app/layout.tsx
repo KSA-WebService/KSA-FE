@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/providers/query-provider";
+import { UserSessionProvider } from "@/providers/user-session-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${notoSansKr.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <UserSessionProvider>{children}</UserSessionProvider>
+        </QueryProvider>
         <Toaster position="top-right" />
       </body>
     </html>

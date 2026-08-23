@@ -689,3 +689,250 @@ export interface ActionLogsListParams {
 export interface ActionLogDetail extends ActionLogListItem {
   details: Record<string, unknown> | null;
 }
+
+// ---------------------------------------------------------------------------
+// Public Posts -- docs/user/api-contract.md "Page 1 — Home" / "Page 5 — News
+// List" / "Page 6 — News Detail". Unauthenticated, public-facing shapes --
+// distinct from the admin Post types above (no `status`/`author`/etc).
+// ---------------------------------------------------------------------------
+
+export interface PublicImageRef {
+  fileId: string;
+  fileUrl: string;
+}
+
+// GET /posts -- "Home News Preview" / "News List"
+export interface PublicPostListItem {
+  postId: string;
+  title: string;
+  categories: PostCategory[];
+  membersOnly: boolean;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  representativeImage: PublicImageRef | null;
+  publishedAt: string;
+}
+
+// Confirmed backend values for the public `period` filter. There is no
+// "all" value on the wire -- "전체" is represented by omitting the param
+// entirely (see PublicPostsListParams.period below).
+export type PostPeriod = "upcoming" | "past" | "undated";
+
+export interface PublicPostsListParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  category?: PostCategory;
+  period?: PostPeriod;
+  // Confirmed values are "latest" | "oldest"; the product decision is
+  // News always displays newest-published-first with no user-facing sort
+  // control, so only "latest" is ever actually sent by this frontend.
+  sort?: "latest" | "oldest";
+}
+
+export interface PublicPostImage extends PublicImageRef {
+  sortOrder: number;
+}
+
+// GET /posts/{postId} -- "News Detail". `content` is confirmed nullable in
+// practice -- a published post can legitimately have no body content.
+export interface PublicPostDetail {
+  postId: string;
+  title: string;
+  content: string | null;
+  categories: PostCategory[];
+  membersOnly: boolean;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  images: PublicPostImage[];
+  publishedAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Public Products -- docs/user/api-contract.md "Page 1 — Home" / "Page 7 —
+// Store List". The public Products API does not support `keyword` (confirmed
+// HTTP 400 if sent) -- see PublicProductsListParams.
+// ---------------------------------------------------------------------------
+
+// GET /products -- "Home Store Preview" / "Store List"
+export interface PublicProductListItem {
+  productId: string;
+  productName: string;
+  productType: ProductType;
+  description: string | null;
+  tokenPrice: number;
+  image: PublicImageRef | null;
+  availabilityStatus: AvailabilityStatus;
+  publishedAt: string;
+}
+
+export interface PublicProductsListParams {
+  page?: number;
+  limit?: number;
+  productType?: ProductType;
+}
+
+// ---------------------------------------------------------------------------
+// Current User ("me") -- docs/user/api-contract.md "Page 4 — My Page". Also
+// used by the shared Header to resolve the authenticated display name, since
+// the Supabase session itself never carries the KSA member's `name`.
+// ---------------------------------------------------------------------------
+
+// GET /users/me
+export interface CurrentUser {
+  userId: string;
+  name: string;
+  studentNumber: string;
+  email: string;
+  role: UserRole;
+  tokenBalance: number;
+  status: UserAccountStatus;
+  agreedPrivacy: boolean;
+  agreedAt: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Create Order -- docs/user/api-contract.md "Page 8 — Order Confirmation".
+// Authenticated (the ordering member's own action) -- distinct from the
+// admin Orders List above (no `customer` field), but reuses OrderStatus
+// and OrderProductSummary since both shapes are identical here.
+// ---------------------------------------------------------------------------
+
+// POST /orders request body. Only the fields the backend actually needs --
+// never a frontend-calculated price/total.
+export interface CreateOrderPayload {
+  productId: string;
+  quantity: number;
+}
+
+// POST /orders response. Authoritative for unitPrice/totalAmount/
+// remainingTokenBalance -- the frontend's pre-submit cost preview is
+// presentation only.
+export interface CreateOrderResult {
+  orderId: string;
+  product: OrderProductSummary;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  orderStatus: OrderStatus;
+  remainingTokenBalance: number;
+  orderedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// My Orders / My Token Logs -- docs/user/api-contract.md "Page 4 — My
+// Page". Authenticated (the member's own read-only history). Distinct from
+// the admin Orders List (no `customer` field) and from any admin Token
+// Events shapes -- only `page`/`limit` are confirmed supported for either
+// endpoint, no filter or sort.
+// ---------------------------------------------------------------------------
+
+export interface MyOrdersParams {
+  page?: number;
+  limit?: number;
+}
+
+// GET /users/me/orders -- item shape. Reuses OrderStatus/OrderProductSummary
+// since both are identical to the admin shapes already defined above.
+export interface MyOrderItem {
+  orderId: string;
+  product: OrderProductSummary;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  orderStatus: OrderStatus;
+  orderedAt: string;
+  acceptedAt: string | null;
+  deliveredAt: string | null;
+  canceledAt: string | null;
+  cancellationReason: string | null;
+}
+
+export interface MyTokenLogsParams {
+  page?: number;
+  limit?: number;
+}
+
+export type TokenTransactionType =
+  | "event_grant"
+  | "event_adjustment"
+  | "order_payment"
+  | "order_refund"
+  | "reset";
+
+export interface TokenLogEventRef {
+  tokenEventId: string;
+  eventName: string;
+}
+
+export interface TokenLogOrderRef {
+  orderId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+}
+
+// GET /users/me/token-logs -- item shape. `tokenEvent`/`order` are
+// mutually exclusive except for `reset` transactions, where both may be
+// null -- the frontend must handle all three shapes safely.
+export interface MyTokenLogItem {
+  tokenLogId: string;
+  transactionType: TokenTransactionType;
+  delta: number;
+  reason: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
+  tokenEvent: TokenLogEventRef | null;
+  order: TokenLogOrderRef | null;
+}
+
+// GET /users/me/token-logs -- full response. Not the standard
+// ListResponse<T> shape -- this endpoint also returns `currentTokenBalance`
+// alongside items/pagination (though the My Page summary uses
+// GET /users/me -> tokenBalance as the canonical balance, per the contract).
+export interface MyTokenLogsResult {
+  currentTokenBalance: number;
+  items: MyTokenLogItem[];
+  pagination: PaginationMeta;
+}
+
+// ---------------------------------------------------------------------------
+// Public Auth -- docs/user/api-contract.md "Page 3 — Account Activation".
+// Both endpoints are public (no Authorization header); Login itself has no
+// KSA backend endpoint at all -- it's Supabase `signInWithPassword` only.
+// ---------------------------------------------------------------------------
+
+export interface VerifyInvitationPayload {
+  token: string;
+}
+
+// POST /auth/invitations/verify
+export interface VerifiedInvitation {
+  name: string;
+  email: string;
+  studentNumber: string;
+  expiresAt: string;
+}
+
+// POST /auth/onboarding/complete. `agreedPrivacy` is typed as the literal
+// `true` -- the contract explicitly forbids ever sending `false`.
+export interface CompleteOnboardingPayload {
+  token: string;
+  password: string;
+  agreedPrivacy: true;
+}
+
+export interface OnboardingCompleteResult {
+  userId: string;
+  name: string;
+  email: string;
+  studentNumber: string;
+  role: UserRole;
+  status: UserAccountStatus;
+  tokenBalance: number;
+  createdAt: string;
+}
