@@ -821,6 +821,86 @@ export interface CreateOrderResult {
 }
 
 // ---------------------------------------------------------------------------
+// My Orders / My Token Logs -- docs/user/api-contract.md "Page 4 — My
+// Page". Authenticated (the member's own read-only history). Distinct from
+// the admin Orders List (no `customer` field) and from any admin Token
+// Events shapes -- only `page`/`limit` are confirmed supported for either
+// endpoint, no filter or sort.
+// ---------------------------------------------------------------------------
+
+export interface MyOrdersParams {
+  page?: number;
+  limit?: number;
+}
+
+// GET /users/me/orders -- item shape. Reuses OrderStatus/OrderProductSummary
+// since both are identical to the admin shapes already defined above.
+export interface MyOrderItem {
+  orderId: string;
+  product: OrderProductSummary;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  orderStatus: OrderStatus;
+  orderedAt: string;
+  acceptedAt: string | null;
+  deliveredAt: string | null;
+  canceledAt: string | null;
+  cancellationReason: string | null;
+}
+
+export interface MyTokenLogsParams {
+  page?: number;
+  limit?: number;
+}
+
+export type TokenTransactionType =
+  | "event_grant"
+  | "event_adjustment"
+  | "order_payment"
+  | "order_refund"
+  | "reset";
+
+export interface TokenLogEventRef {
+  tokenEventId: string;
+  eventName: string;
+}
+
+export interface TokenLogOrderRef {
+  orderId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+}
+
+// GET /users/me/token-logs -- item shape. `tokenEvent`/`order` are
+// mutually exclusive except for `reset` transactions, where both may be
+// null -- the frontend must handle all three shapes safely.
+export interface MyTokenLogItem {
+  tokenLogId: string;
+  transactionType: TokenTransactionType;
+  delta: number;
+  reason: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
+  tokenEvent: TokenLogEventRef | null;
+  order: TokenLogOrderRef | null;
+}
+
+// GET /users/me/token-logs -- full response. Not the standard
+// ListResponse<T> shape -- this endpoint also returns `currentTokenBalance`
+// alongside items/pagination (though the My Page summary uses
+// GET /users/me -> tokenBalance as the canonical balance, per the contract).
+export interface MyTokenLogsResult {
+  currentTokenBalance: number;
+  items: MyTokenLogItem[];
+  pagination: PaginationMeta;
+}
+
+// ---------------------------------------------------------------------------
 // Public Auth -- docs/user/api-contract.md "Page 3 — Account Activation".
 // Both endpoints are public (no Authorization header); Login itself has no
 // KSA backend endpoint at all -- it's Supabase `signInWithPassword` only.
