@@ -1,16 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProductImage } from "@/components/user/product-image";
 import { PRODUCT_TYPE_LABELS } from "@/lib/user/product-labels";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { PublicProductListItem } from "@/types/api";
-
-// Approximate character-length heuristic for "would overflow ~2-3 lines" --
-// avoids a DOM scrollHeight/ResizeObserver measurement for a requirement
-// the spec itself only calls "approximately 2-3 lines".
-const DESCRIPTION_EXPAND_THRESHOLD = 100;
 
 interface StoreProductCardProps {
   product: PublicProductListItem;
@@ -26,21 +21,56 @@ interface StoreProductCardProps {
 // identical everywhere it appears.
 export function StoreProductCard({ product, onOrder }: StoreProductCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+
   const isUnavailable = product.availabilityStatus === "unavailable";
-  const description = product.description ?? "";
-  const isLong = description.length > DESCRIPTION_EXPAND_THRESHOLD;
+
+  // Ignore meaningless trailing spaces / empty lines while preserving
+  // authored line breaks inside the actual description.
+  const description = (product.description ?? "").trimEnd();
+
+  useEffect(() => {
+    const element = descriptionRef.current;
+
+    if (!element || !description || expanded) {
+      return;
+    }
+
+    const checkOverflow = () => {
+      setIsOverflowing(element.scrollHeight > element.clientHeight);
+    };
+
+    checkOverflow();
+
+    const observer = new ResizeObserver(checkOverflow);
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [description, expanded]);
 
   return (
     <div className={cn("flex flex-col", isUnavailable && "opacity-70")}>
       <ProductImage image={product.image} alt={product.productName} />
 
-      <p className="mt-4 text-meta font-medium text-brand-800">{PRODUCT_TYPE_LABELS[product.productType]}</p>
-      <h3 className="mt-1 text-body font-semibold text-text-primary">{product.productName}</h3>
-      <p className="mt-1 text-body text-text-primary">🪙 {product.tokenPrice} Tokens</p>
+      <p className="mt-4 text-meta font-medium text-brand-800">
+        {PRODUCT_TYPE_LABELS[product.productType]}
+      </p>
+
+      <h3 className="mt-1 text-body font-semibold text-text-primary">
+        {product.productName}
+      </h3>
+
+      <p className="mt-1 text-body text-text-primary">
+        🪙 {product.tokenPrice} Tokens
+      </p>
 
       {description && (
         <div className="mt-2">
           <p
+            ref={descriptionRef}
             className={cn(
               "whitespace-pre-wrap text-meta text-text-secondary",
               !expanded && "line-clamp-3",
@@ -48,7 +78,8 @@ export function StoreProductCard({ product, onOrder }: StoreProductCardProps) {
           >
             {description}
           </p>
-          {isLong && (
+
+          {isOverflowing && (
             <button
               type="button"
               onClick={() => setExpanded((current) => !current)}
@@ -62,7 +93,9 @@ export function StoreProductCard({ product, onOrder }: StoreProductCardProps) {
 
       <div className="mt-4">
         {isUnavailable ? (
-          <p className="text-meta font-medium text-text-muted">현재 주문 불가</p>
+          <p className="text-meta font-medium text-text-muted">
+            현재 주문 불가
+          </p>
         ) : (
           <Button className="w-full" onClick={() => onOrder(product)}>
             주문하기
