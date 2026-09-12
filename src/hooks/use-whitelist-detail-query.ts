@@ -7,7 +7,9 @@ import {
   getWhitelistDetail,
   resendInvitations,
   sendInvitations,
+  updateWhitelistEntry,
 } from "@/lib/api/whitelist";
+import type { UpdateWhitelistPayload } from "@/types/api";
 
 function detailKey(whitelistUserId: string) {
   return ["whitelist", "detail", whitelistUserId] as const;
@@ -20,6 +22,27 @@ export function useWhitelistDetailQuery(whitelistUserId: string) {
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error("No active session.");
       return getWhitelistDetail(whitelistUserId, accessToken);
+    },
+  });
+}
+
+export function useUpdateWhitelistMutation(whitelistUserId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: UpdateWhitelistPayload) => {
+      const accessToken = await getAccessToken();
+      if (!accessToken) throw new Error("No active session.");
+
+      return updateWhitelistEntry(whitelistUserId, payload, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: detailKey(whitelistUserId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["whitelist", "list"],
+      });
     },
   });
 }

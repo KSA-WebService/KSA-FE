@@ -18,9 +18,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toTitleCase } from "@/lib/utils";
 import type { WhitelistDetail } from "@/types/api";
+import { EditWhitelistDialog } from "./edit-whitelist-dialog";
 
 // docs/admin/admin-ui.md §6 "Invitation Action Mapping".
-function getInvitationAction(detail: WhitelistDetail): "send" | "resend" | null {
+function getInvitationAction(
+  detail: WhitelistDetail,
+): "send" | "resend" | null {
   if (detail.userId) return null;
   if (detail.invitationStatus === "pending") return "send";
   if (
@@ -33,13 +36,23 @@ function getInvitationAction(detail: WhitelistDetail): "send" | "resend" | null 
   return null;
 }
 
-export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: string }) {
+export function WhitelistDetailContent({
+  whitelistUserId,
+}: {
+  whitelistUserId: string;
+}) {
   const router = useRouter();
-  const { data: detail, isLoading, isError, refetch } = useWhitelistDetailQuery(whitelistUserId);
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    refetch,
+  } = useWhitelistDetailQuery(whitelistUserId);
   const sendInvitation = useSendInvitationMutation(whitelistUserId);
   const resendInvitation = useResendInvitationMutation(whitelistUserId);
   const deleteWhitelist = useDeleteWhitelistMutation(whitelistUserId);
 
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSendOpen, setIsSendOpen] = useState(false);
   const [isResendOpen, setIsResendOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -67,21 +80,30 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
 
   const action = getInvitationAction(detail);
 
+  const canManageWhitelistIdentity =
+    detail.userId === null && detail.invitationStatus !== "accepted";
+
   function handleSend() {
     sendInvitation.mutate(undefined, {
       onSuccess: (response) => {
         // A batch response can be top-level successful while this specific
         // item failed -- inspect the row result, not just resultType.
-        const item = response.results.find((row) => row.whitelistUserId === whitelistUserId);
+        const item = response.results.find(
+          (row) => row.whitelistUserId === whitelistUserId,
+        );
         if (item?.sendStatus === "sent") {
           setIsSendOpen(false);
           toast.success("초대 이메일을 보냈습니다.");
         } else {
-          toast.error("초대 이메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.");
+          toast.error(
+            "초대 이메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.",
+          );
         }
       },
       onError: () => {
-        toast.error("초대 이메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.");
+        toast.error(
+          "초대 이메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
       },
     });
   }
@@ -89,16 +111,22 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
   function handleResend() {
     resendInvitation.mutate(undefined, {
       onSuccess: (response) => {
-        const item = response.results.find((row) => row.whitelistUserId === whitelistUserId);
+        const item = response.results.find(
+          (row) => row.whitelistUserId === whitelistUserId,
+        );
         if (item?.sendStatus === "resent") {
           setIsResendOpen(false);
           toast.success("초대 이메일을 다시 보냈습니다.");
         } else {
-          toast.error("초대 이메일을 다시 보내지 못했습니다. 잠시 후 다시 시도해주세요.");
+          toast.error(
+            "초대 이메일을 다시 보내지 못했습니다. 잠시 후 다시 시도해주세요.",
+          );
         }
       },
       onError: () => {
-        toast.error("초대 이메일을 다시 보내지 못했습니다. 잠시 후 다시 시도해주세요.");
+        toast.error(
+          "초대 이메일을 다시 보내지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
       },
     });
   }
@@ -110,7 +138,9 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
         router.push("/admin/whitelist");
       },
       onError: () => {
-        toast.error("화이트리스트 항목을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        toast.error(
+          "화이트리스트 항목을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
       },
     });
   }
@@ -129,7 +159,22 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="rounded-surface border border-border bg-surface p-6">
-          <h2 className="text-section-heading font-semibold text-text-primary">Student Information</h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-section-heading font-semibold text-text-primary">
+              Student Information
+            </h2>
+
+            {canManageWhitelistIdentity && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsEditOpen(true)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+
           <dl className="mt-4 space-y-3">
             <Field label="Name" value={detail.name} />
             <Field label="Student ID" value={detail.studentNumber} />
@@ -138,20 +183,41 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
         </section>
 
         <section className="rounded-surface border border-border bg-surface p-6">
-          <h2 className="text-section-heading font-semibold text-text-primary">Invitation Information</h2>
+          <h2 className="text-section-heading font-semibold text-text-primary">
+            Invitation Information
+          </h2>
           <dl className="mt-4 space-y-3">
-            <Field label="Invitation Status" value={<InvitationStatusBadge status={detail.invitationStatus} />} />
+            <Field
+              label="Invitation Status"
+              value={<InvitationStatusBadge status={detail.invitationStatus} />}
+            />
             <Field label="Invited By" value={detail.invitedBy?.name ?? "—"} />
-            <Field label="Invited At" value={<DateTime value={detail.invitedAt} />} />
+            <Field
+              label="Invited At"
+              value={<DateTime value={detail.invitedAt} />}
+            />
             <Field
               label="Link Status"
-              value={detail.latestInvitation ? toTitleCase(detail.latestInvitation.linkStatus) : "Not Sent"}
+              value={
+                detail.latestInvitation
+                  ? toTitleCase(detail.latestInvitation.linkStatus)
+                  : "Not Sent"
+              }
             />
             <Field
               label="Expires At"
-              value={detail.latestInvitation ? <DateTime value={detail.latestInvitation.expiresAt} /> : "—"}
+              value={
+                detail.latestInvitation ? (
+                  <DateTime value={detail.latestInvitation.expiresAt} />
+                ) : (
+                  "—"
+                )
+              }
             />
-            <Field label="Accepted At" value={<DateTime value={detail.acceptedAt} />} />
+            <Field
+              label="Accepted At"
+              value={<DateTime value={detail.acceptedAt} />}
+            />
           </dl>
 
           {action === "send" && (
@@ -167,19 +233,37 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
         </section>
 
         <section className="rounded-surface border border-border bg-surface p-6 lg:col-span-2">
-          <h2 className="text-section-heading font-semibold text-text-primary">Record Information</h2>
+          <h2 className="text-section-heading font-semibold text-text-primary">
+            Record Information
+          </h2>
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Added At" value={<DateTime value={detail.createdAt} />} />
-            <Field label="Updated At" value={<DateTime value={detail.updatedAt} />} />
+            <Field
+              label="Added At"
+              value={<DateTime value={detail.createdAt} />}
+            />
+            <Field
+              label="Updated At"
+              value={<DateTime value={detail.updatedAt} />}
+            />
           </dl>
         </section>
       </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
-          Delete
-        </Button>
-      </div>
+      {canManageWhitelistIdentity && (
+        <div className="mt-6 flex justify-end">
+          <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+            Delete
+          </Button>
+        </div>
+      )}
+
+      {canManageWhitelistIdentity && (
+        <EditWhitelistDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          detail={detail}
+        />
+      )}
 
       <ConfirmDialog
         open={isSendOpen}
@@ -211,26 +295,28 @@ export function WhitelistDetailContent({ whitelistUserId }: { whitelistUserId: s
         <p className="text-meta text-text-secondary">{detail.email}</p>
       </ConfirmDialog>
 
-      <ConfirmDialog
-        open={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Delete Whitelist Entry"
-        description={
-          <>
-            이 학생을 화이트리스트에서 삭제하시겠습니까?
-            <br />
-            활성 초대 링크가 있다면 더 이상 사용할 수 없습니다.
-          </>
-        }
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={handleDelete}
-        isConfirming={deleteWhitelist.isPending}
-      >
-        <p className="text-meta text-text-secondary">
-          {detail.name} · {detail.email}
-        </p>
-      </ConfirmDialog>
+      {canManageWhitelistIdentity && (
+        <ConfirmDialog
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+          title="Delete Whitelist Entry"
+          description={
+            <>
+              이 학생을 화이트리스트에서 삭제하시겠습니까?
+              <br />
+              활성 초대 링크가 있다면 더 이상 사용할 수 없습니다.
+            </>
+          }
+          confirmLabel="Delete"
+          variant="destructive"
+          onConfirm={handleDelete}
+          isConfirming={deleteWhitelist.isPending}
+        >
+          <p className="text-meta text-text-secondary">
+            {detail.name} · {detail.email}
+          </p>
+        </ConfirmDialog>
+      )}
     </div>
   );
 }

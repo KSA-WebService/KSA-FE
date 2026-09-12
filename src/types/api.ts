@@ -77,7 +77,12 @@ export interface UsersListParams {
 // Whitelist -- docs/admin/api-contract.md "Admin Whitelist ..." sections
 // ---------------------------------------------------------------------------
 
-export type InvitationStatus = "pending" | "invited" | "accepted" | "expired" | "failed";
+export type InvitationStatus =
+  | "pending"
+  | "invited"
+  | "accepted"
+  | "expired"
+  | "failed";
 
 export interface WhitelistSummary {
   whitelistUserId: string;
@@ -129,6 +134,25 @@ export interface CreateWhitelistPayload {
   name: string;
   studentNumber: string;
   email: string;
+}
+
+export interface UpdateWhitelistPayload {
+  name?: string;
+  studentNumber?: string;
+  email?: string;
+  reason: string;
+}
+
+export interface UpdateWhitelistResponse {
+  whitelistUserId: string;
+  name: string;
+  studentNumber: string;
+  email: string;
+  invitationStatus: InvitationStatus;
+  userId: string | null;
+  invitedAt: string | null;
+  acceptedAt: string | null;
+  updatedAt: string;
 }
 
 export type WhitelistDuplicatePolicy = "skip" | "fail" | "update";
@@ -504,7 +528,8 @@ export interface TokenResetPreview {
   previewedAt: string;
 }
 
-export const TOKEN_RESET_CONFIRMATION_PHRASE = "RESET_ALL_STUDENT_TOKEN_BALANCES" as const;
+export const TOKEN_RESET_CONFIRMATION_PHRASE =
+  "RESET_ALL_STUDENT_TOKEN_BALANCES" as const;
 
 export interface TokenResetPayload {
   confirmation: typeof TOKEN_RESET_CONFIRMATION_PHRASE;

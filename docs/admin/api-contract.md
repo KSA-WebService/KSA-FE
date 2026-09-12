@@ -3730,3 +3730,390 @@ Confirmed example mappings:
 Admin Action Logs are read-only in the frontend.
 
 No frontend mutation endpoint is used for Action Logs.
+
+## Admin Whitelist Identity Correction
+
+### PATCH `/api/v1/admin/auth/whitelist-users/{whitelistUserId}`
+
+Corrects whitelist identity information before the student completes onboarding.
+
+This endpoint is intended for correcting incorrect source data such as:
+
+- Name
+- Student ID
+- Email
+
+It does not edit an already registered user's identity information.
+
+### Authentication
+
+Administrator authentication required.
+
+    Authorization: Bearer <SUPABASE_ACCESS_TOKEN>
+    Content-Type: application/json
+
+### Editable Fields
+
+The following identity fields are optional individually:
+
+- `name`
+- `studentNumber`
+- `email`
+
+Administrative correction reason:
+
+- `reason` — required
+
+At least one identity field must actually change.
+
+### Request Examples
+
+Name-only correction:
+
+    {
+      "name": "Corrected Student Name",
+      "reason": "Name was incorrect in the original whitelist data"
+    }
+
+Student ID-only correction:
+
+    {
+      "studentNumber": "21234567",
+      "reason": "Student ID was entered incorrectly"
+    }
+
+Email-only correction:
+
+    {
+      "email": "corrected.student@connect.ust.hk",
+      "reason": "Incorrect HKUST Connect email in source data"
+    }
+
+Multiple-field correction:
+
+    {
+      "name": "Corrected Student Name",
+      "studentNumber": "21234567",
+      "email": "corrected.student@connect.ust.hk",
+      "reason": "Correcting imported whitelist identity information"
+    }
+
+### Request Fields
+
+| Field           | Type   | Required | Description                              |
+| --------------- | ------ | -------- | ---------------------------------------- |
+| `name`          | string | No       | Corrected student name                   |
+| `studentNumber` | string | No       | Corrected HKUST Student ID               |
+| `email`         | string | No       | Corrected HKUST Connect email            |
+| `reason`        | string | Yes      | Administrative reason for the correction |
+
+### Validation
+
+#### Name
+
+- Trim surrounding whitespace.
+- Must not be empty when provided.
+- Maximum length: `128`.
+
+#### Student ID
+
+- Trim surrounding whitespace.
+- Must not be empty when provided.
+- Maximum length: `36`.
+- Treat as a string, not a number.
+
+#### Email
+
+- Trim surrounding whitespace.
+- Normalize to lowercase.
+- Must be a valid email address.
+- Must use the HKUST Connect domain:
+
+  `@connect.ust.hk`
+
+- Maximum length: `255`.
+
+#### Reason
+
+- Trim surrounding whitespace.
+- Required.
+- Must not be empty.
+- Maximum length: `500`.
+
+### Eligibility
+
+Whitelist identity correction is allowed only while the whitelist record is still eligible for pre-onboarding administration.
+
+Eligible records:
+
+- are not soft-deleted
+- have `userId = null`
+- have not reached `invitationStatus = accepted`
+
+Eligible invitation states include:
+
+- `pending`
+- `invited`
+- `expired`
+- `failed`
+
+Correction is not allowed when:
+
+- the whitelist entry has already been accepted
+- the whitelist entry is linked to a registered KSA user
+- the whitelist entry has been soft-deleted
+
+The backend is the final authority for eligibility.
+
+### Uniqueness Rules
+
+Email and Student ID uniqueness remain enforced.
+
+#### Email
+
+When Email changes, the backend checks for conflicts against:
+
+- other whitelist records
+- registered users
+
+Whitelist uniqueness checks also treat soft-deleted whitelist records as reserved identities.
+
+#### Student ID
+
+When Student ID changes, the backend checks for conflicts against:
+
+- other whitelist records
+- registered users
+
+Whitelist uniqueness checks also treat soft-deleted whitelist records as reserved identities.
+
+The current whitelist record is excluded from its own conflict check.
+
+### Invitation Behavior
+
+#### Name or Student ID Change
+
+Changing only Name and/or Student ID:
+
+- does not revoke the current invitation
+- does not change the current invitation status
+- keeps an existing invitation usable
+
+#### Email Change
+
+Changing Email:
+
+- preserves the current whitelist `invitationStatus`
+- revokes any active invitation linked to the whitelist entry
+- preserves previous invitation history
+- does not automatically send a new invitation
+
+For an already invited entry, the administrator must use the existing resend flow after correcting the Email.
+
+Example state transition:
+
+    invitationStatus: invited
+    latest invitation: active
+            ↓
+    PATCH Email
+            ↓
+    invitationStatus: invited
+    previous invitation: revoked
+            ↓
+    POST /api/v1/admin/auth/invitations/resend
+            ↓
+    new invitation: active
+
+For a pending entry with no invitation yet, the administrator may use the normal first-time Send Invitation flow after correction.
+
+### Success Response
+
+The PATCH response returns the updated whitelist identity/state summary.
+
+Example:
+
+    {
+      "resultType": "success",
+      "error": null,
+      "success": {
+        "whitelistUserId": "867e8c7e-a994-42ea-93d0-8a7894c08be6",
+        "name": "Corrected Student Name",
+        "studentNumber": "21234567",
+        "email": "corrected.student@connect.ust.hk",
+        "invitationStatus": "invited",
+        "userId": null,
+        "invitedAt": "2026-08-18T10:15:23.476Z",
+        "acceptedAt": null,
+        "updatedAt": "2026-09-12T10:00:00.000Z"
+      }
+    }
+
+### Response Fields
+
+| Field              | Type   | Nullable | Description                        |
+| ------------------ | ------ | -------- | ---------------------------------- |
+| `whitelistUserId`  | string | No       | Whitelist-entry UUID               |
+| `name`             | string | No       | Current student name               |
+| `studentNumber`    | string | No       | Current Student ID                 |
+| `email`            | string | No       | Current HKUST Connect email        |
+| `invitationStatus` | string | No       | Current whitelist invitation state |
+| `userId`           | string | Yes      | Linked KSA user UUID or `null`     |
+| `invitedAt`        | string | Yes      | Invitation timestamp or `null`     |
+| `acceptedAt`       | string | Yes      | Acceptance timestamp or `null`     |
+| `updatedAt`        | string | No       | Latest whitelist update timestamp  |
+
+The PATCH response is not the complete whitelist-detail shape.
+
+It does not include fields such as:
+
+- `invitedBy`
+- `latestInvitation`
+- `createdAt`
+
+After a successful correction, the frontend should refetch:
+
+`GET /api/v1/admin/auth/whitelist-users/{whitelistUserId}`
+
+to obtain the canonical current detail state.
+
+The whitelist list should also be refreshed or invalidated because Name, Student ID, or Email may have changed.
+
+### Known Errors
+
+#### `W400_NO_CHANGES`
+
+Cause:
+
+The request contains no actual identity change.
+
+Example:
+
+    {
+      "email": "same.address@connect.ust.hk",
+      "reason": "Correction test"
+    }
+
+when the whitelist record already has that same email.
+
+Frontend display:
+
+    변경된 학생 정보가 없습니다.
+
+#### `W404_WHITELIST_USER_NOT_FOUND`
+
+Cause:
+
+- whitelist entry does not exist, or
+- whitelist entry is soft-deleted
+
+Frontend should treat the entry as unavailable.
+
+#### `W409_WHITELIST_USER_NOT_EDITABLE`
+
+Cause:
+
+The whitelist entry:
+
+- has already been accepted, or
+- is already linked to a registered user
+
+Frontend display:
+
+    이미 가입이 완료된 학생의 화이트리스트 정보는 수정할 수 없습니다.
+
+#### `W409_EMAIL`
+
+Cause:
+
+The corrected email conflicts with another whitelist record.
+
+Frontend display:
+
+    이미 사용 중인 이메일입니다.
+
+#### `U409_EMAIL`
+
+Cause:
+
+The corrected email conflicts with an existing registered user.
+
+Frontend display:
+
+    이미 사용 중인 이메일입니다.
+
+#### `W409_STUDENT_NUMBER`
+
+Cause:
+
+The corrected Student ID conflicts with another whitelist record.
+
+Frontend display:
+
+    이미 사용 중인 학번입니다.
+
+#### `U409_STUDENT_NUMBER`
+
+Cause:
+
+The corrected Student ID conflicts with an existing registered user.
+
+Frontend display:
+
+    이미 사용 중인 학번입니다.
+
+#### `W409_UPDATE_CONFLICT`
+
+Cause:
+
+The whitelist record changed concurrently between the initial read and correction update.
+
+Frontend behavior:
+
+- do not assume the correction was applied
+- refresh the latest whitelist detail
+- ask the administrator to review the current state before retrying
+
+#### `W409_DUPLICATE`
+
+Cause:
+
+A database uniqueness conflict occurred while applying the update.
+
+This is a fallback conflict response for a uniqueness race.
+
+Frontend may use the generic correction failure message when a more specific field conflict cannot be identified.
+
+### Audit Logging
+
+Every successful correction creates an administrator action log.
+
+Admin action:
+
+`update_whitelist_user`
+
+The audit metadata records:
+
+- previous identity values
+- updated identity values
+- changed fields
+- correction reason
+- number of active invitations revoked
+
+Failed correction attempts do not create a successful correction audit entry.
+
+### Frontend Usage
+
+Use this endpoint from the Whitelist Detail `Edit Student Information` dialog.
+
+Frontend rules:
+
+- show Edit only for eligible pre-onboarding entries
+- prefill Name, Student ID, and Email from the current detail
+- require a correction reason
+- disable Save when no identity field has changed
+- send only fields that actually changed where practical
+- handle known duplicate errors at the relevant field
+- refetch the full whitelist detail after success
+- invalidate or refresh the whitelist list after success
+- when Email changes, guide the administrator to Send or Resend Invitation as appropriate
+- never use this endpoint to edit an already registered user's identity
