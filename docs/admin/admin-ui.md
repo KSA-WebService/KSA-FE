@@ -1807,7 +1807,11 @@ The import flow is complete when:
 
 Allow administrators to review one whitelist entry, understand its current invitation state, send or resend an invitation when appropriate, and remove the entry from the active whitelist.
 
-This page is read-only except for invitation actions and deletion.
+This page is read-only by default, with controlled administrative actions for:
+
+- correcting whitelist identity information before onboarding is completed
+- sending or resending invitations when appropriate
+- deleting eligible pre-onboarding whitelist entries
 
 ### Route
 
@@ -1825,7 +1829,7 @@ The back action returns to `/admin/whitelist` and should preserve the previous l
 
 ### Student Information
 
-Display as read-only:
+Display:
 
 | UI Label     | API Field       |
 | ------------ | --------------- |
@@ -1833,7 +1837,165 @@ Display as read-only:
 | `Student ID` | `studentNumber` |
 | `Email`      | `email`         |
 
-Do not provide inline editing on this page.
+The information is read-only in the normal detail view.
+
+For eligible pre-onboarding whitelist entries, show an `Edit` action in the Student Information card.
+
+The `Edit` action is available only when:
+
+- `userId` is `null`
+- `invitationStatus` is not `accepted`
+
+Eligible invitation states include:
+
+- `pending`
+- `invited`
+- `expired`
+- `failed`
+
+Do not show `Edit` for:
+
+- accepted whitelist entries
+- whitelist entries already linked to a registered user
+
+### Edit Student Information
+
+Clicking `Edit` opens a modal.
+
+Modal title:
+
+`Edit Student Information`
+
+Editable fields:
+
+- `Name`
+- `Student ID`
+- `Email`
+
+Required administrative field:
+
+- `Reason for correction`
+
+The modal must be prefilled with the current whitelist identity values.
+
+The correction reason is not part of the student's identity data. It is required for administrative audit logging.
+
+#### Save Behavior
+
+Primary action:
+
+`Save Changes`
+
+The button should remain disabled when no identity field has actually changed.
+
+Send only changed identity fields where practical, together with the required `reason`.
+
+Example email-only correction:
+
+    {
+      "email": "corrected@connect.ust.hk",
+      "reason": "Incorrect email in the original whitelist data"
+    }
+
+Student ID must remain a string.
+
+Email must use the HKUST Connect domain:
+
+`@connect.ust.hk`
+
+#### Success Behavior
+
+If only Name and/or Student ID changes:
+
+1. Close the modal.
+2. Refresh the whitelist detail.
+3. Refresh/invalidate the whitelist list.
+4. Display:
+
+   학생 정보가 수정되었습니다.
+
+The current invitation remains valid.
+
+If Email changes:
+
+1. Close the modal.
+2. Refresh the whitelist detail.
+3. Refresh/invalidate the whitelist list.
+4. Preserve the current whitelist `invitationStatus`.
+5. If an active invitation existed, the backend revokes that invitation.
+6. Inform the administrator that a new invitation must be sent or resent to the corrected email.
+
+For a previously invited entry, display guidance equivalent to:
+
+    이메일이 수정되었습니다. 기존 초대 링크는 더 이상 사용할 수 없습니다. 수정된 이메일로 초대장을 다시 보내주세요.
+
+For a pending entry with no previous invitation, display guidance equivalent to:
+
+    이메일이 수정되었습니다. 수정된 이메일로 초대장을 보내주세요.
+
+#### Validation
+
+Name required:
+
+    이름을 입력해주세요.
+
+Student ID required:
+
+    학번을 입력해주세요.
+
+Email required:
+
+    이메일을 입력해주세요.
+
+Invalid HKUST Connect email:
+
+    HKUST Connect 이메일(@connect.ust.hk)을 입력해주세요.
+
+Reason required:
+
+    수정 사유를 입력해주세요.
+
+No actual identity change:
+
+    변경된 학생 정보가 없습니다.
+
+#### Duplicate Errors
+
+Whitelist or registered-user email conflict:
+
+Backend error codes may include:
+
+- `W409_EMAIL`
+- `U409_EMAIL`
+
+Display:
+
+    이미 사용 중인 이메일입니다.
+
+Whitelist or registered-user Student ID conflict:
+
+Backend error codes may include:
+
+- `W409_STUDENT_NUMBER`
+- `U409_STUDENT_NUMBER`
+
+Display:
+
+    이미 사용 중인 학번입니다.
+
+#### No Longer Editable
+
+Backend error:
+
+`W409_WHITELIST_USER_NOT_EDITABLE`
+
+Display:
+
+    이미 가입이 완료된 학생의 화이트리스트 정보는 수정할 수 없습니다.
+
+Close the edit flow and rely on the refreshed backend state.
+
+The backend remains the final authority for correction eligibility.
 
 ### Invitation Information
 
@@ -1991,13 +2153,28 @@ The top-level `invitedAt` is sufficient for the visible sent timestamp. Do not s
 
 ### Delete Action
 
-Show a destructive secondary action:
+Show the destructive `Delete` action only when the whitelist entry is still eligible for pre-onboarding management.
 
-`Delete`
+Show `Delete` only when:
+
+- `userId` is `null`
+- `invitationStatus` is not `accepted`
+
+Eligible states include:
+
+- `pending`
+- `invited`
+- `expired`
+- `failed`
+
+Do not show `Delete` when:
+
+- `invitationStatus` is `accepted`
+- `userId` is present
+
+The backend remains the final authority for deletion eligibility.
 
 The delete action should be visually separated from the primary invitation action.
-
-Clicking `Delete` opens a confirmation modal.
 
 #### Delete Confirmation Modal
 
@@ -2041,10 +2218,14 @@ The frontend should navigate away after the confirmed delete response instead of
 
 When the invitation is accepted or `userId` is present:
 
-- Do not show `Send Invitation`.
-- Do not show `Resend Invitation`.
+- do not show `Edit`
+- do not show `Delete`
+- do not show `Send Invitation`
+- do not show `Resend Invitation`
 
 The detail remains available for reviewing invitation history and whitelist metadata while the entry is active.
+
+Registered-user identity correction is handled separately and is not part of this whitelist-detail flow.
 
 ### Loading State
 
@@ -2082,6 +2263,10 @@ Load detail:
 
 `GET /api/v1/admin/auth/whitelist-users/{whitelistUserId}`
 
+Correct whitelist identity:
+
+`PATCH /api/v1/admin/auth/whitelist-users/{whitelistUserId}`
+
 Send invitation:
 
 `POST /api/v1/admin/auth/invitations/send`
@@ -2102,7 +2287,14 @@ See `api-contract.md` for confirmed request and response structures.
 
 ### Implementation Rules
 
-- Keep the page read-only except for invitation actions and deletion.
+- Keep the normal detail view read-only.
+- Allow identity correction only through the dedicated Edit dialog.
+- Require a correction reason.
+- Send only changed identity fields where practical.
+- Show Edit and Delete only for eligible pre-onboarding entries.
+- Do not show Edit or Delete for accepted or account-linked entries.
+- If the email changes, rely on the backend to revoke any active invitation and require the administrator to send/resend to the corrected email.
+- Keep the backend as the final authority for edit and delete eligibility.
 - Choose `Send Invitation` or `Resend Invitation` from the confirmed state mapping.
 - Never show an invitation action for `accepted` or account-linked entries.
 - Do not expose invitation-expiry controls in the MVP.
@@ -2131,6 +2323,17 @@ The page is complete when:
 - Successful deletion returns the administrator to the whitelist list.
 - Batch item-level invitation failures are handled correctly.
 - Loading and error states are handled.
+- Eligible pre-onboarding entries show an `Edit` action.
+- Edit opens a prefilled correction modal.
+- Name, Student ID, and Email can be corrected before onboarding.
+- A correction reason is required.
+- Save is disabled when no identity field has changed.
+- Duplicate email and Student ID errors are displayed clearly.
+- Email correction revokes the previous active invitation when applicable.
+- Email correction preserves the whitelist invitation status.
+- Corrected invited entries can resend an invitation to the new email.
+- Accepted and account-linked entries show neither Edit nor Delete.
+- Eligible pre-onboarding entries continue to show Delete.
 
 ## 7. Posts List
 

@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import type {
   CreateWhitelistPayload,
+  UpdateWhitelistPayload,
+  UpdateWhitelistResponse,
   DeleteWhitelistResponse,
   ImportWhitelistPayload,
   ImportWhitelistResult,
@@ -31,14 +33,23 @@ export function getWhitelist(params: WhitelistListParams, accessToken: string) {
 }
 
 // GET /admin/auth/whitelist-users/{id} -- "Admin Whitelist Detail"
-export function getWhitelistDetail(whitelistUserId: string, accessToken: string) {
-  return apiFetch<WhitelistDetail>(`/admin/auth/whitelist-users/${whitelistUserId}`, {
-    accessToken,
-  });
+export function getWhitelistDetail(
+  whitelistUserId: string,
+  accessToken: string,
+) {
+  return apiFetch<WhitelistDetail>(
+    `/admin/auth/whitelist-users/${whitelistUserId}`,
+    {
+      accessToken,
+    },
+  );
 }
 
 // POST /admin/auth/whitelist-users -- "Admin Whitelist Create"
-export function createWhitelistEntry(payload: CreateWhitelistPayload, accessToken: string) {
+export function createWhitelistEntry(
+  payload: CreateWhitelistPayload,
+  accessToken: string,
+) {
   return apiFetch<WhitelistDetail>("/admin/auth/whitelist-users", {
     method: "POST",
     body: payload,
@@ -46,8 +57,27 @@ export function createWhitelistEntry(payload: CreateWhitelistPayload, accessToke
   });
 }
 
+// PATCH /admin/auth/whitelist-users/{id} -- Admin Whitelist Identity Correction
+export function updateWhitelistEntry(
+  whitelistUserId: string,
+  payload: UpdateWhitelistPayload,
+  accessToken: string,
+) {
+  return apiFetch<UpdateWhitelistResponse>(
+    `/admin/auth/whitelist-users/${whitelistUserId}`,
+    {
+      method: "PATCH",
+      body: payload,
+      accessToken,
+    },
+  );
+}
+
 // POST /admin/auth/whitelist-users/import -- "Admin Whitelist Bulk Import"
-export function importWhitelistEntries(payload: ImportWhitelistPayload, accessToken: string) {
+export function importWhitelistEntries(
+  payload: ImportWhitelistPayload,
+  accessToken: string,
+) {
   return apiFetch<ImportWhitelistResult>("/admin/auth/whitelist-users/import", {
     method: "POST",
     body: payload,
@@ -57,7 +87,10 @@ export function importWhitelistEntries(payload: ImportWhitelistPayload, accessTo
 
 // POST /admin/auth/invitations/send -- "Admin Invitation Send". Omits
 // expiresInHours so the backend default 72-hour lifetime applies.
-export function sendInvitations(whitelistUserIds: string[], accessToken: string) {
+export function sendInvitations(
+  whitelistUserIds: string[],
+  accessToken: string,
+) {
   return apiFetch<SendInvitationResponse>("/admin/auth/invitations/send", {
     method: "POST",
     body: { whitelistUserIds },
@@ -66,7 +99,10 @@ export function sendInvitations(whitelistUserIds: string[], accessToken: string)
 }
 
 // POST /admin/auth/invitations/resend -- "Admin Invitation Resend"
-export function resendInvitations(whitelistUserIds: string[], accessToken: string) {
+export function resendInvitations(
+  whitelistUserIds: string[],
+  accessToken: string,
+) {
   return apiFetch<ResendInvitationResponse>("/admin/auth/invitations/resend", {
     method: "POST",
     body: { whitelistUserIds },
@@ -75,9 +111,15 @@ export function resendInvitations(whitelistUserIds: string[], accessToken: strin
 }
 
 // DELETE /admin/auth/whitelist-users/{id} -- "Admin Whitelist Delete"
-export function deleteWhitelistEntry(whitelistUserId: string, accessToken: string) {
-  return apiFetch<DeleteWhitelistResponse>(`/admin/auth/whitelist-users/${whitelistUserId}`, {
-    method: "DELETE",
-    accessToken,
-  });
+export function deleteWhitelistEntry(
+  whitelistUserId: string,
+  accessToken: string,
+) {
+  return apiFetch<DeleteWhitelistResponse>(
+    `/admin/auth/whitelist-users/${whitelistUserId}`,
+    {
+      method: "DELETE",
+      accessToken,
+    },
+  );
 }
