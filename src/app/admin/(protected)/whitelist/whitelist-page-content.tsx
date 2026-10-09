@@ -20,13 +20,14 @@ import type { InvitationStatus, WhitelistListParams } from "@/types/api";
 
 const PAGE_SIZE = 20;
 
-const INVITATION_STATUS_OPTIONS: { value: InvitationStatus; label: string }[] = [
-  { value: "pending", label: "Pending" },
-  { value: "invited", label: "Invited" },
-  { value: "accepted", label: "Accepted" },
-  { value: "expired", label: "Expired" },
-  { value: "failed", label: "Failed" },
-];
+const INVITATION_STATUS_OPTIONS: { value: InvitationStatus; label: string }[] =
+  [
+    { value: "pending", label: "Pending" },
+    { value: "invited", label: "Invited" },
+    { value: "accepted", label: "Accepted" },
+    { value: "expired", label: "Expired" },
+    { value: "failed", label: "Failed" },
+  ];
 
 export function WhitelistPageContent() {
   const router = useRouter();
@@ -43,14 +44,19 @@ export function WhitelistPageContent() {
       page,
       limit: PAGE_SIZE,
       keyword: keyword || undefined,
-      invitationStatus: (invitationStatus as WhitelistListParams["invitationStatus"]) || undefined,
+      invitationStatus:
+        (invitationStatus as WhitelistListParams["invitationStatus"]) ||
+        undefined,
     }),
     [page, keyword, invitationStatus],
   );
 
   const { data, isLoading, isError, refetch } = useWhitelistQuery(queryParams);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -86,8 +92,8 @@ export function WhitelistPageContent() {
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <SearchInput
             value={keyword}
-            onChange={(value) => updateParams({ keyword: value })}
-            placeholder="Search by name, email, or student ID"
+            onSearch={(value) => updateParams({ keyword: value })}
+            placeholder="Name, email, or student ID"
           />
           <FilterSelect
             label="Invitation Status"
@@ -102,25 +108,46 @@ export function WhitelistPageContent() {
           <table className="w-full min-w-[800px] border-collapse text-left">
             <thead className="sticky top-0 z-10 bg-surface-muted">
               <tr>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Name
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Student ID
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Email
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Invitation Status
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+                >
                   Invited At
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+                >
                   Added At
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Actions
                 </th>
               </tr>
@@ -144,9 +171,15 @@ export function WhitelistPageContent() {
                     key={entry.whitelistUserId}
                     className="border-t border-border transition-colors duration-150 hover:bg-surface-muted"
                   >
-                    <td className="px-4 py-3 text-body text-text-primary">{entry.name}</td>
-                    <td className="px-4 py-3 text-body text-text-secondary">{entry.studentNumber}</td>
-                    <td className="px-4 py-3 text-body text-text-secondary">{entry.email}</td>
+                    <td className="px-4 py-3 text-body text-text-primary">
+                      {entry.name}
+                    </td>
+                    <td className="px-4 py-3 text-body text-text-secondary">
+                      {entry.studentNumber}
+                    </td>
+                    <td className="px-4 py-3 text-body text-text-secondary">
+                      {entry.email}
+                    </td>
                     <td className="px-4 py-3">
                       <InvitationStatusBadge status={entry.invitationStatus} />
                     </td>
