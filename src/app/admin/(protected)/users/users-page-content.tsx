@@ -69,7 +69,10 @@ export function UsersPageContent() {
   // URL search params are the source of truth for list state (per the
   // checkpoint's requirement) so refreshes and back/forward navigation
   // restore exactly what was showing.
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -83,7 +86,10 @@ export function UsersPageContent() {
   }
 
   function handleSort(sortKey: UsersSortField) {
-    updateParams({ sort: sortKey, order: sort === sortKey && order === "asc" ? "desc" : "asc" });
+    updateParams({
+      sort: sortKey,
+      order: sort === sortKey && order === "asc" ? "desc" : "asc",
+    });
   }
 
   const hasActiveFilters = Boolean(keyword || role || status);
@@ -96,8 +102,8 @@ export function UsersPageContent() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={keyword}
-          onChange={(value) => updateParams({ keyword: value })}
-          placeholder="Search by name, email, or student ID"
+          onSearch={(value) => updateParams({ keyword: value })}
+          placeholder="Name, email, or student ID"
         />
         <FilterSelect
           label="Role"
@@ -134,7 +140,9 @@ export function UsersPageContent() {
                   {column.sortKey ? (
                     <button
                       type="button"
-                      onClick={() => handleSort(column.sortKey as UsersSortField)}
+                      onClick={() =>
+                        handleSort(column.sortKey as UsersSortField)
+                      }
                       className="inline-flex items-center gap-1 transition-colors duration-150 hover:text-text-primary"
                     >
                       {column.label}
@@ -171,13 +179,21 @@ export function UsersPageContent() {
                   key={user.userId}
                   className="border-t border-border transition-colors duration-150 hover:bg-surface-muted"
                 >
-                  <td className="px-4 py-3 text-body text-text-primary">{user.name}</td>
-                  <td className="px-4 py-3 text-body text-text-secondary">{user.studentNumber}</td>
-                  <td className="px-4 py-3 text-body text-text-secondary">{user.email}</td>
+                  <td className="px-4 py-3 text-body text-text-primary">
+                    {user.name}
+                  </td>
+                  <td className="px-4 py-3 text-body text-text-secondary">
+                    {user.studentNumber}
+                  </td>
+                  <td className="px-4 py-3 text-body text-text-secondary">
+                    {user.email}
+                  </td>
                   <td className="px-4 py-3">
                     <RoleBadge role={user.role} />
                   </td>
-                  <td className="px-4 py-3 text-body text-text-primary">{user.tokenBalance}</td>
+                  <td className="px-4 py-3 text-body text-text-primary">
+                    {user.tokenBalance}
+                  </td>
                   <td className="px-4 py-3">
                     <UserStatusBadge status={user.status} />
                   </td>
@@ -185,7 +201,10 @@ export function UsersPageContent() {
                     <DateTime value={user.createdAt} />
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/users/${user.userId}`} className={buttonVariants("secondary")}>
+                    <Link
+                      href={`/admin/users/${user.userId}`}
+                      className={buttonVariants("secondary")}
+                    >
                       View
                     </Link>
                   </td>
@@ -196,7 +215,11 @@ export function UsersPageContent() {
 
         {isEmpty && (
           <EmptyState
-            message={hasActiveFilters ? "조건에 맞는 사용자가 없습니다." : "등록된 사용자가 없습니다."}
+            message={
+              hasActiveFilters
+                ? "조건에 맞는 사용자가 없습니다."
+                : "등록된 사용자가 없습니다."
+            }
           />
         )}
 

@@ -14,8 +14,15 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { ErrorState } from "@/components/admin/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { AvailabilityBadge, PublicationBadge } from "@/components/products/product-badges";
-import type { AvailabilityStatus, ProductsListParams, PublicationStatus } from "@/types/api";
+import {
+  AvailabilityBadge,
+  PublicationBadge,
+} from "@/components/products/product-badges";
+import type {
+  AvailabilityStatus,
+  ProductsListParams,
+  PublicationStatus,
+} from "@/types/api";
 
 const PAGE_SIZE = 20;
 
@@ -44,15 +51,22 @@ export function ProductsPageContent() {
       page,
       limit: PAGE_SIZE,
       keyword: keyword || undefined,
-      publicationStatus: (publicationStatus as ProductsListParams["publicationStatus"]) || undefined,
-      availabilityStatus: (availabilityStatus as ProductsListParams["availabilityStatus"]) || undefined,
+      publicationStatus:
+        (publicationStatus as ProductsListParams["publicationStatus"]) ||
+        undefined,
+      availabilityStatus:
+        (availabilityStatus as ProductsListParams["availabilityStatus"]) ||
+        undefined,
     }),
     [page, keyword, publicationStatus, availabilityStatus],
   );
 
   const { data, isLoading, isError, refetch } = useProductsQuery(queryParams);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -65,7 +79,9 @@ export function ProductsPageContent() {
     router.push(`/admin/products?${nextSearchParams.toString()}`);
   }
 
-  const hasActiveFilters = Boolean(keyword || publicationStatus || availabilityStatus);
+  const hasActiveFilters = Boolean(
+    keyword || publicationStatus || availabilityStatus,
+  );
   const products = data?.items ?? [];
   const pagination = data?.pagination;
   const isEmpty = !isLoading && !isError && products.length === 0;
@@ -75,8 +91,8 @@ export function ProductsPageContent() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={keyword}
-          onChange={(value) => updateParams({ keyword: value })}
-          placeholder="Search by product name"
+          onSearch={(value) => updateParams({ keyword: value })}
+          placeholder="Product name"
         />
         <FilterSelect
           label="Publication"
@@ -98,25 +114,46 @@ export function ProductsPageContent() {
         <table className="w-full min-w-[900px] border-collapse text-left">
           <thead className="sticky top-0 z-10 bg-surface-muted">
             <tr>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Product
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Token Price
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Stock
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Availability
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Publication
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+              >
                 Updated At
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Actions
               </th>
             </tr>
@@ -155,11 +192,17 @@ export function ProductsPageContent() {
                           <Package className="h-4 w-4 text-text-muted" />
                         )}
                       </div>
-                      <span className="text-body text-text-primary">{product.productName}</span>
+                      <span className="text-body text-text-primary">
+                        {product.productName}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-body text-text-primary">{product.tokenPrice} Tokens</td>
-                  <td className="px-4 py-3 text-body text-text-primary">{product.stockQuantity}</td>
+                  <td className="px-4 py-3 text-body text-text-primary">
+                    {product.tokenPrice} Tokens
+                  </td>
+                  <td className="px-4 py-3 text-body text-text-primary">
+                    {product.stockQuantity}
+                  </td>
                   <td className="px-4 py-3">
                     <AvailabilityBadge status={product.availabilityStatus} />
                   </td>
@@ -170,7 +213,10 @@ export function ProductsPageContent() {
                     <DateTime value={product.updatedAt} />
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/products/${product.productId}`} className={buttonVariants("secondary")}>
+                    <Link
+                      href={`/admin/products/${product.productId}`}
+                      className={buttonVariants("secondary")}
+                    >
                       View
                     </Link>
                   </td>
@@ -181,7 +227,11 @@ export function ProductsPageContent() {
 
         {isEmpty && (
           <EmptyState
-            message={hasActiveFilters ? "조건에 맞는 상품이 없습니다." : "등록된 상품이 없습니다."}
+            message={
+              hasActiveFilters
+                ? "조건에 맞는 상품이 없습니다."
+                : "등록된 상품이 없습니다."
+            }
           />
         )}
 

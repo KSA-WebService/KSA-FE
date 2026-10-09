@@ -1,54 +1,102 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { useRef, useState } from "react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface SearchInputProps {
   value: string;
-  onChange: (value: string) => void;
+  onSearch: (value: string) => void;
   placeholder?: string;
 }
 
-// Debounced text search per docs/admin/product.md §17 / admin-ui.md's list
-// pages ("Debounce text input briefly before requesting new results").
-export function SearchInput({ value, onChange, placeholder }: SearchInputProps) {
+export function SearchInput({
+  value,
+  onSearch,
+  placeholder,
+}: SearchInputProps) {
   const [prevValue, setPrevValue] = useState(value);
   const [draft, setDraft] = useState(value);
+  const isComposingRef = useRef(false);
 
-  // React's documented pattern for adjusting state when a prop changes
-  // (e.g. browser back/forward restoring a different URL query state):
-  // guarded setState during render, not inside an effect.
+  // Only synchronize when the applied keyword changes.
+  // Unrelated parent re-renders must not overwrite the draft.
   if (value !== prevValue) {
     setPrevValue(value);
     setDraft(value);
   }
 
-  // Keep the latest onChange available to the debounce effect below
-  // without making it a dependency -- callers typically pass a new inline
-  // function each render, which would otherwise reset the debounce timer
-  // on every parent re-render instead of only when `draft` changes.
-  const onChangeRef = useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  });
+  function handleSearch() {
+    const normalized = draft.trim();
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onChangeRef.current(draft.trim());
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [draft]);
+    // Avoid unnecessary navigation for unchanged searches.
+    if (normalized === value) return;
+
+    onSearch(normalized);
+  }
+
+  function handleClear() {
+    setDraft("");
+
+    // Clearing removes only the applied keyword.
+    if (value !== "") {
+      onSearch("");
+    }
+  }
 
   return (
-    <div className="relative w-full max-w-[320px]">
-      <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
-      <Input
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        placeholder={placeholder}
-        className="pl-9"
-      />
-    </div>
+    <form
+      role="search"
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        if (isComposingRef.current) return;
+
+        handleSearch();
+      }}
+      className="flex w-full max-w-[460px] items-center gap-2"
+    >
+      <div className="relative min-w-0 flex-1">
+        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
+
+        <Input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingRef.current = false;
+          }}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              (event.nativeEvent.isComposing ||
+                isComposingRef.current ||
+                event.nativeEvent.keyCode === 229)
+            ) {
+              event.preventDefault();
+            }
+          }}
+          placeholder={placeholder}
+          aria-label={placeholder || "Search"}
+          className="pr-9 pl-9"
+        />
+
+        {draft.length > 0 && (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label="Clear search"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-text-muted transition-colors hover:text-text-primary"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <Button type="submit">Search</Button>
+    </form>
   );
 }

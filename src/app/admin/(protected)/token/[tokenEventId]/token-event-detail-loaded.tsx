@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/button";
 import { useDeleteTokenEventMutation } from "@/hooks/use-token-event-detail-query";
 import { GrantTable } from "./grant-table";
 import { RenameEventDialog } from "./rename-event-dialog";
-import type { GrantStatus, TokenEventDetail, TokenEventDetailParams } from "@/types/api";
+import type {
+  GrantStatus,
+  TokenEventDetail,
+  TokenEventDetailParams,
+} from "@/types/api";
 
 interface TokenEventDetailLoadedProps {
   tokenEventId: string;
@@ -42,7 +46,10 @@ export function TokenEventDetailLoaded({
   const grantStatus = queryParams.grantStatus ?? "";
   const hasActiveFilters = Boolean(keyword || grantStatus);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -62,7 +69,9 @@ export function TokenEventDetailLoaded({
         router.push("/admin/token");
       },
       onError: () => {
-        toast.error("토큰 이벤트를 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        toast.error(
+          "토큰 이벤트를 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
       },
     });
   }
@@ -106,8 +115,8 @@ export function TokenEventDetailLoaded({
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={keyword}
-          onChange={(value) => updateParams({ keyword: value })}
-          placeholder="Search by name, Student ID, or email"
+          onSearch={(value) => updateParams({ keyword: value })}
+          placeholder="Name, Student ID, or email"
         />
         <FilterSelect
           label="Grant Status"

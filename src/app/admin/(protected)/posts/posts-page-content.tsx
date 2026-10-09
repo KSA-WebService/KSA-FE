@@ -14,7 +14,11 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { ErrorState } from "@/components/admin/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { AccessBadge, CategoryBadge, PostStatusBadge } from "@/components/posts/post-badges";
+import {
+  AccessBadge,
+  CategoryBadge,
+  PostStatusBadge,
+} from "@/components/posts/post-badges";
 import { POST_CATEGORY_OPTIONS } from "@/lib/post-form";
 import type { PostStatus, PostsListParams } from "@/types/api";
 
@@ -48,7 +52,10 @@ export function PostsPageContent() {
 
   const { data, isLoading, isError, refetch } = usePostsQuery(queryParams);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -71,8 +78,8 @@ export function PostsPageContent() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={keyword}
-          onChange={(value) => updateParams({ keyword: value })}
-          placeholder="Search by title"
+          onSearch={(value) => updateParams({ keyword: value })}
+          placeholder="Post title"
         />
         <FilterSelect
           label="Category"
@@ -94,25 +101,46 @@ export function PostsPageContent() {
         <table className="w-full min-w-[900px] border-collapse text-left">
           <thead className="sticky top-0 z-10 bg-surface-muted">
             <tr>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Post
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Categories
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Access
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Status
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Author
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+              >
                 Updated At
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Actions
               </th>
             </tr>
@@ -151,7 +179,9 @@ export function PostsPageContent() {
                           <FileText className="h-4 w-4 text-text-muted" />
                         )}
                       </div>
-                      <span className="text-body text-text-primary">{post.title}</span>
+                      <span className="text-body text-text-primary">
+                        {post.title}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -167,12 +197,17 @@ export function PostsPageContent() {
                   <td className="px-4 py-3">
                     <PostStatusBadge status={post.status} />
                   </td>
-                  <td className="px-4 py-3 text-body text-text-secondary">{post.author.name}</td>
+                  <td className="px-4 py-3 text-body text-text-secondary">
+                    {post.author.name}
+                  </td>
                   <td className="px-4 py-3 text-body text-text-secondary">
                     <DateTime value={post.updatedAt} />
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/posts/${post.postId}`} className={buttonVariants("secondary")}>
+                    <Link
+                      href={`/admin/posts/${post.postId}`}
+                      className={buttonVariants("secondary")}
+                    >
                       View
                     </Link>
                   </td>
@@ -183,7 +218,11 @@ export function PostsPageContent() {
 
         {isEmpty && (
           <EmptyState
-            message={hasActiveFilters ? "조건에 맞는 게시글이 없습니다." : "등록된 게시글이 없습니다."}
+            message={
+              hasActiveFilters
+                ? "조건에 맞는 게시글이 없습니다."
+                : "등록된 게시글이 없습니다."
+            }
           />
         )}
 

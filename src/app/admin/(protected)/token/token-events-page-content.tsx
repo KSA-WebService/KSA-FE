@@ -32,9 +32,13 @@ export function TokenEventsPageContent() {
     [page, keyword],
   );
 
-  const { data, isLoading, isError, refetch } = useTokenEventsQuery(queryParams);
+  const { data, isLoading, isError, refetch } =
+    useTokenEventsQuery(queryParams);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -64,7 +68,9 @@ export function TokenEventsPageContent() {
             <Button variant="destructive" onClick={() => setIsResetOpen(true)}>
               Reset Student Tokens
             </Button>
-            <Button onClick={() => setIsCreateOpen(true)}>New Token Event</Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              New Token Event
+            </Button>
           </>
         }
       />
@@ -73,8 +79,8 @@ export function TokenEventsPageContent() {
         <div className="mb-4">
           <SearchInput
             value={keyword}
-            onChange={(value) => updateParams({ keyword: value })}
-            placeholder="Search by event name"
+            onSearch={(value) => updateParams({ keyword: value })}
+            placeholder="Event name"
           />
         </div>
 
@@ -82,22 +88,40 @@ export function TokenEventsPageContent() {
           <table className="w-full min-w-[800px] border-collapse text-left">
             <thead className="sticky top-0 z-10 bg-surface-muted">
               <tr>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Event Name
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Granted Members
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+                >
                   Last Grant At
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Created By
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+                >
                   Created At
                 </th>
-                <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+                <th
+                  scope="col"
+                  className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+                >
                   Actions
                 </th>
               </tr>
@@ -121,17 +145,26 @@ export function TokenEventsPageContent() {
                     key={event.tokenEventId}
                     className="border-t border-border transition-colors duration-150 hover:bg-surface-muted"
                   >
-                    <td className="px-4 py-3 text-body text-text-primary">{event.eventName}</td>
-                    <td className="px-4 py-3 text-body text-text-primary">{event.grantedMemberCount}</td>
+                    <td className="px-4 py-3 text-body text-text-primary">
+                      {event.eventName}
+                    </td>
+                    <td className="px-4 py-3 text-body text-text-primary">
+                      {event.grantedMemberCount}
+                    </td>
                     <td className="px-4 py-3 text-body text-text-secondary">
                       <DateTime value={event.lastGrantUpdatedAt} />
                     </td>
-                    <td className="px-4 py-3 text-body text-text-secondary">{event.createdBy.name}</td>
+                    <td className="px-4 py-3 text-body text-text-secondary">
+                      {event.createdBy.name}
+                    </td>
                     <td className="px-4 py-3 text-body text-text-secondary">
                       <DateTime value={event.createdAt} />
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/token/${event.tokenEventId}`} className={buttonVariants("secondary")}>
+                      <Link
+                        href={`/admin/token/${event.tokenEventId}`}
+                        className={buttonVariants("secondary")}
+                      >
                         View
                       </Link>
                     </td>
@@ -142,7 +175,11 @@ export function TokenEventsPageContent() {
 
           {isEmpty && (
             <EmptyState
-              message={keyword ? "조건에 맞는 토큰 이벤트가 없습니다." : "등록된 토큰 이벤트가 없습니다."}
+              message={
+                keyword
+                  ? "조건에 맞는 토큰 이벤트가 없습니다."
+                  : "등록된 토큰 이벤트가 없습니다."
+              }
             />
           )}
 

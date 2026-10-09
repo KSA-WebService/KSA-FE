@@ -39,15 +39,20 @@ export function OrdersPageContent() {
       page,
       limit: PAGE_SIZE,
       keyword: keyword || undefined,
-      orderStatus: (orderStatus as OrdersListParams["orderStatus"]) || undefined,
+      orderStatus:
+        (orderStatus as OrdersListParams["orderStatus"]) || undefined,
       sort: sort === "oldest" ? "oldest" : undefined,
     }),
     [page, keyword, orderStatus, sort],
   );
 
-  const { data, isLoading, isFetching, isError, refetch } = useOrdersQuery(queryParams);
+  const { data, isLoading, isFetching, isError, refetch } =
+    useOrdersQuery(queryParams);
 
-  function updateParams(next: Record<string, string | number | undefined>, resetPage = true) {
+  function updateParams(
+    next: Record<string, string | number | undefined>,
+    resetPage = true,
+  ) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value === undefined || value === "") {
@@ -88,8 +93,8 @@ export function OrdersPageContent() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={keyword}
-          onChange={(value) => updateParams({ keyword: value })}
-          placeholder="Search by order ID, product, customer, Student ID, or email"
+          onSearch={(value) => updateParams({ keyword: value })}
+          placeholder="Order ID, product, customer..."
         />
         <FilterSelect
           label="Sort"
@@ -110,22 +115,40 @@ export function OrdersPageContent() {
           <thead className="sticky top-0 z-10 bg-surface-muted">
             <tr>
               <th scope="col" className="border-b border-border px-2 py-3" />
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Order
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Customer
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Amount
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Status
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium whitespace-nowrap text-text-secondary"
+              >
                 Ordered At
               </th>
-              <th scope="col" className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary">
+              <th
+                scope="col"
+                className="border-b border-border px-4 py-3 text-meta font-medium text-text-secondary"
+              >
                 Actions
               </th>
             </tr>
@@ -142,13 +165,21 @@ export function OrdersPageContent() {
                 </tr>
               ))}
 
-            {!isLoading && !isError && orders.map((order) => <OrderRow key={order.orderId} order={order} />)}
+            {!isLoading &&
+              !isError &&
+              orders.map((order) => (
+                <OrderRow key={order.orderId} order={order} />
+              ))}
           </tbody>
         </table>
 
         {isEmpty && (
           <EmptyState
-            message={hasActiveFilters ? "조건에 맞는 주문이 없습니다." : "주문 내역이 없습니다."}
+            message={
+              hasActiveFilters
+                ? "조건에 맞는 주문이 없습니다."
+                : "주문 내역이 없습니다."
+            }
           />
         )}
 
